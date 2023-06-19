@@ -1,0 +1,61 @@
+pipeline{
+     agent none
+     environment{     
+    DOCKERHUB_CREDENTIALS= credentials('dockerhub_id')
+    GITHUB_CREDENTIALS= credentials('github_id')
+    REVISION = 1
+    HARBOR_CREDENTIALS = credentials('harbor_id') 
+
+    
+} 
+     stages{
+         stage('Checkout') {
+         agent{
+     label 'javaprojectmanager'
+     }
+          steps{ 
+          git branch: 'main', url: 'https://github.com/sumit871996/s4hmisbackend.git'
+               }
+          }
+      
+          stage('Docker build'){
+          agent{
+     label 'javaprojectmanager'
+     }
+          steps{
+               sh "docker image prune -af"
+               sh "docker image build -t 20.21.104.152/s4hmis/s4hmisserver:$REVISION ."
+               sh "docker image tag 20.21.104.152/s4hmis/s4hmisserver:$REVISION sumithpe/s4hmisserver:$REVISION"
+               }  
+          }
+          
+          
+          stage('Push to harbor & docker'){
+          agent{
+        label 'javaprojectmanager'
+    }
+            steps{
+                sh 'echo $HARBOR_CREDENTIALS_PSW | docker login 20.21.104.152 -u $HARBOR_CREDENTIALS_USR --password-stdin'  
+                sh "docker image push 20.21.104.152/s4hmis/s4hmisserver:$REVISION"
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin' 
+                sh "docker image push sumithpe/s4hmisserver:$REVISION"
+            }
+        }
+
+        stage('Run Container'){
+          agent{
+        label 'javaprojectmanager'
+    }
+            steps{
+                script {
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                sh'''
+                docker container rm -f sneakerheadservercon
+                docker container run -d -p 8080:8080 --network s4hmis-bridge --name s4hmisservercon sumithpe/s4hmisserver:$REVISION
+                '''
+            }
+                }
+        }
+        }
+     }
+}
