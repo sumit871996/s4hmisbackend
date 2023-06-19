@@ -7,6 +7,6 @@ RUN mvn -f /home/app/pom.xml clean verify -DskipTests
 # Package stage
 #
 FROM openjdk:11-jre-slim
-COPY --from=build /home/app/target/s4hmis-0.0.1-SNAPSHOT.jar /usr/local/lib/s4hmis.jar
+COPY --from=build /home/app/target/hmis_spring 0.0.1-SNAPSHOT.jar /usr/local/lib/s4hmis.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/usr/local/lib/s4hmis.jar"]
