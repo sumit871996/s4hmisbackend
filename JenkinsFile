@@ -50,7 +50,7 @@ pipeline{
                 script {
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 sh'''
-                docker container rm -f sneakerheadservercon
+                docker container rm -f s4hmisservercon
                 docker container run -d -p 8080:8080 --network s4hmis-bridge --name s4hmisservercon sumithpe/s4hmisserver:$REVISION
                 '''
             }
